@@ -8,24 +8,52 @@
     top: 0;
     left: 0;
     padding: 1rem;
+    display: flex;          /* Use flexbox */
+    flex-direction: column; /* Stack toggle button + nav vertically */
+    transition: width 0.3s ease;
+    overflow: hidden;       /* Prevent text overflow */
+  }
+  
+  /* Collapsed Sidebar */
+  .sidebar.closed {
+    width: 60px; /* Shrink width */
+  }
+  
+  /* Toggle Button (Hamburger) pinned at top */
+  .sidebar .toggle-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    margin-bottom: 1rem; /* Some spacing below */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* NAV occupies remaining space */
+  .sidebar nav {
+    flex: 1;                         /* Take up remaining vertical space */
     display: flex;
     flex-direction: column;
-    transition: width 0.3s ease;
-    overflow: hidden;  /* Prevent text overflow */
-}
-
-/* Collapsed Sidebar */
-.sidebar.closed {
-    width: 60px; /* Shrink width */
-}
-
-/* Hide Text When Collapsed */
-.sidebar.closed nav a span {
-    display: none; /* Hide only text */
-}
-
-/* Ensure Icons Stay Visible */
-.sidebar nav a {
+    align-items: flex-start;         /* Normal (expanded) mode alignment */
+    justify-content: flex-start;
+  }
+  
+  /* Collapsed: center icons vertically and horizontally */
+  .sidebar.closed nav {
+    align-items: center;
+    justify-content: left;
+  }
+  
+  /* Hide Text When Collapsed */
+  .sidebar.closed nav a span {
+    display: none; /* Hide only the text */
+  }
+  
+  /* Sidebar Links */
+  .sidebar nav a {
     display: flex;
     align-items: center;
     gap: 10px; /* Space between icon and text */
@@ -34,14 +62,15 @@
     text-decoration: none;
     transition: background 0.2s;
     white-space: nowrap; /* Prevent text wrapping */
-    overflow: hidden; /* Prevent squishing */
-}
-
-/* Active & Hover Effects */
-.sidebar nav a.active {
+    overflow: hidden;    /* Prevent squishing */
+  }
+  
+  /* Active & Hover Effects */
+  .sidebar nav a.active {
     background: #444;
-}
-
-.sidebar nav a:hover {
+  }
+  
+  .sidebar nav a:hover {
     background: #555;
-}
+  }
+  

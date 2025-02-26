@@ -5,7 +5,7 @@ import { FaBars, FaTimes, FaHome, FaListAlt, FaHistory } from "react-icons/fa"; 
 import "./Sidebar.css"; // Import CSS for styling
 
 const Sidebar = () => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className={`sidebar ${isOpen ? "open" : "closed"}`}>

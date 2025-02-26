@@ -7,36 +7,60 @@ function LedgerPage() {
   const { programId } = useParams();
   const navigate = useNavigate();
 
-  // State for all transactions
+  // Program data (for display in title)
+  const [program, setProgram] = useState(null);
+
+  // Ledger transactions
   const [transactions, setTransactions] = useState([]);
-  // State for the new transaction form
+
+  // WBS categories/subcategories
+  const [wbsCategories, setWbsCategories] = useState([]);
+  const [wbsSubcategories, setWbsSubcategories] = useState([]);
+
+  // Collapsible form
+  const [formOpen, setFormOpen] = useState(true);
+
+  // New transaction form (grouped fields)
   const [newTransaction, setNewTransaction] = useState({
     vendor_name: '',
     expense_description: '',
     wbs_category_id: '',
     wbs_subcategory_id: '',
+    notes: '',
     baseline_date: '',
     baseline_amount: '',
     planned_date: '',
     planned_amount: '',
     actual_date: '',
     actual_amount: '',
-    invoice_link: '',
     invoice_number: '',
-    notes: ''
+    invoice_link: ''
   });
-  // States for WBS options
-  const [wbsCategories, setWbsCategories] = useState([]);
-  const [wbsSubcategories, setWbsSubcategories] = useState([]);
 
-  // States to manage inline editing for transactions
+  // Row-based editing
   const [editingTransactionId, setEditingTransactionId] = useState(null);
   const [editingTransactionData, setEditingTransactionData] = useState({});
 
-  // State for search
+  // Search
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Fetch ledger transactions filtered by programId
+  // ---------------------------
+  // FETCH DATA
+  // ---------------------------
+  useEffect(() => {
+    fetchProgram();
+    fetchTransactions();
+    fetchWbsCategories();
+    fetchWbsSubcategories();
+  }, [programId]);
+
+  const fetchProgram = () => {
+    axios
+      .get(`http://localhost:8000/programs/${programId}`)
+      .then((res) => setProgram(res.data))
+      .catch((err) => console.error('Error fetching program:', err));
+  };
+
   const fetchTransactions = () => {
     axios
       .get('http://localhost:8000/ledger_transactions/')
@@ -49,7 +73,6 @@ function LedgerPage() {
       .catch((error) => console.error('Error fetching ledger transactions:', error));
   };
 
-  // Fetch WBS categories for this program
   const fetchWbsCategories = () => {
     axios
       .get('http://localhost:8000/wbs_categories/')
@@ -62,107 +85,85 @@ function LedgerPage() {
       .catch((error) => console.error('Error fetching WBS categories:', error));
   };
 
-  // Fetch all WBS subcategories
   const fetchWbsSubcategories = () => {
     axios
       .get('http://localhost:8000/wbs_subcategories/')
-      .then((response) => {
-        setWbsSubcategories(response.data);
-      })
+      .then((response) => setWbsSubcategories(response.data))
       .catch((error) => console.error('Error fetching WBS subcategories:', error));
   };
 
-  useEffect(() => {
-    fetchTransactions();
-    fetchWbsCategories();
-    fetchWbsSubcategories();
-  }, [programId]);
-
-  // Handle changes for new transaction form (non-dropdown fields)
+  // ---------------------------
+  // NEW TRANSACTION
+  // ---------------------------
   const handleInputChange = (e) => {
     setNewTransaction({ ...newTransaction, [e.target.name]: e.target.value });
   };
 
-  // Handle change for WBS Category dropdown (for new transaction)
   const handleCategoryChange = (e) => {
-    const selectedCategoryId = e.target.value;
     setNewTransaction({
       ...newTransaction,
-      wbs_category_id: selectedCategoryId,
-      wbs_subcategory_id: '' // reset subcategory when category changes
+      wbs_category_id: e.target.value,
+      wbs_subcategory_id: ''
     });
   };
 
-  // Filter subcategories based on selected WBS category for new transaction
-  const filteredSubcategories = newTransaction.wbs_category_id
-    ? wbsSubcategories.filter(
-        (sub) => sub.category_id === parseInt(newTransaction.wbs_category_id)
-      )
-    : [];
-
-  // Submit new transaction with conversion for empty string values
   const handleAddTransaction = (e) => {
     e.preventDefault();
     const transactionData = { ...newTransaction, program_id: parseInt(programId) };
 
-    // Convert empty strings to null for optional fields (WBS, dates, amounts)
-    if (transactionData.wbs_category_id === '') {
-      transactionData.wbs_category_id = null;
+    // Convert empty strings to null
+    for (let field of [
+      'wbs_category_id',
+      'wbs_subcategory_id',
+      'baseline_date',
+      'planned_date',
+      'actual_date'
+    ]) {
+      if (!transactionData[field]) transactionData[field] = null;
     }
-    if (transactionData.wbs_subcategory_id === '') {
-      transactionData.wbs_subcategory_id = null;
-    }
-    if (transactionData.baseline_date === '') {
-      transactionData.baseline_date = null;
-    }
-    if (transactionData.planned_date === '') {
-      transactionData.planned_date = null;
-    }
-    if (transactionData.actual_date === '') {
-      transactionData.actual_date = null;
-    }
-    if (transactionData.baseline_amount === '') {
-      transactionData.baseline_amount = null;
-    }
-    if (transactionData.planned_amount === '') {
-      transactionData.planned_amount = null;
-    }
-    if (transactionData.actual_amount === '') {
-      transactionData.actual_amount = null;
+    for (let amtField of ['baseline_amount', 'planned_amount', 'actual_amount']) {
+      if (transactionData[amtField] === '') transactionData[amtField] = null;
     }
 
     axios
       .post('http://localhost:8000/ledger_transactions/', transactionData)
       .then(() => {
         fetchTransactions();
-        // Reset form
+        // Reset form (stay open)
         setNewTransaction({
           vendor_name: '',
           expense_description: '',
           wbs_category_id: '',
           wbs_subcategory_id: '',
+          notes: '',
           baseline_date: '',
           baseline_amount: '',
           planned_date: '',
           planned_amount: '',
           actual_date: '',
           actual_amount: '',
-          invoice_link: '',
           invoice_number: '',
-          notes: ''
+          invoice_link: ''
         });
       })
       .catch((error) => console.error('Error adding transaction:', error));
   };
 
-  // Start inline editing for a given transaction
+  // For subcategory filter
+  const filteredSubcategories = newTransaction.wbs_category_id
+    ? wbsSubcategories.filter(
+        (sub) => sub.category_id === parseInt(newTransaction.wbs_category_id)
+      )
+    : [];
+
+  // ---------------------------
+  // ROW EDIT
+  // ---------------------------
   const handleEditClick = (tx) => {
     setEditingTransactionId(tx.id);
-    // Clone the transaction data into our editing state
     setEditingTransactionData({ ...tx });
   };
 
-  // Handle change in editing fields
   const handleEditChange = (e) => {
     setEditingTransactionData({
       ...editingTransactionData,
@@ -170,48 +171,45 @@ function LedgerPage() {
     });
   };
 
-  // Handle change for WBS Category dropdown in edit mode
   const handleEditCategoryChange = (e) => {
-    const selectedCategoryId = e.target.value;
     setEditingTransactionData({
       ...editingTransactionData,
-      wbs_category_id: selectedCategoryId,
-      wbs_subcategory_id: '' // reset subcategory if category changes
+      wbs_category_id: e.target.value,
+      wbs_subcategory_id: ''
     });
   };
 
-  // Save updated transaction (PUT) with conversion for empty string values
   const handleUpdateTransaction = (id) => {
     const {
       vendor_name,
       expense_description,
-      baseline_amount,
-      planned_amount,
-      actual_amount,
+      notes,
       baseline_date,
+      baseline_amount,
       planned_date,
+      planned_amount,
       actual_date,
+      actual_amount,
       wbs_category_id,
       wbs_subcategory_id,
-      invoice_link,
       invoice_number,
-      notes
+      invoice_link
     } = editingTransactionData;
 
     const updateData = {
       vendor_name,
       expense_description,
-      baseline_amount: baseline_amount === '' ? null : baseline_amount,
-      planned_amount: planned_amount === '' ? null : planned_amount,
-      actual_amount: actual_amount === '' ? null : actual_amount,
+      notes,
       baseline_date: baseline_date === '' ? null : baseline_date,
+      baseline_amount: baseline_amount === '' ? null : baseline_amount,
       planned_date: planned_date === '' ? null : planned_date,
+      planned_amount: planned_amount === '' ? null : planned_amount,
       actual_date: actual_date === '' ? null : actual_date,
+      actual_amount: actual_amount === '' ? null : actual_amount,
       wbs_category_id: wbs_category_id === '' ? null : wbs_category_id,
       wbs_subcategory_id: wbs_subcategory_id === '' ? null : wbs_subcategory_id,
-      invoice_link,
       invoice_number,
-      notes
+      invoice_link
     };
 
     axios
@@ -223,13 +221,11 @@ function LedgerPage() {
       .catch((error) => console.error('Error updating transaction:', error));
   };
 
-  // Cancel editing mode
   const handleCancelEdit = () => {
     setEditingTransactionId(null);
     setEditingTransactionData({});
   };
 
-  // Delete transaction
   const handleDeleteTransaction = (id) => {
     axios
       .delete(`http://localhost:8000/ledger_transactions/${id}`)
@@ -237,7 +233,50 @@ function LedgerPage() {
       .catch((error) => console.error('Error deleting transaction:', error));
   };
 
-  // Filter transactions based on search
+  // ---------------------------
+  // HIGHLIGHTS & UTILS
+  // ---------------------------
+  // Light green if actual date/amount, light yellow if planned but no actual, gray if baseline only
+  const getRowBackground = (tx) => {
+    if (tx.actual_date && tx.actual_amount) return '#d4edda'; // green
+    if (
+      tx.planned_date &&
+      tx.planned_amount &&
+      (!tx.actual_date || !tx.actual_amount)
+    )
+      return '#fff3cd'; // yellow
+    if (
+      tx.baseline_date &&
+      tx.baseline_amount &&
+      !tx.planned_date &&
+      !tx.planned_amount
+    )
+      return '#e2e3e5'; // gray
+    return '#fff'; // default white
+  };
+
+  // Show USD with 0 decimals in read mode
+  const formatUsd0 = (amount) => {
+    if (!amount || isNaN(amount)) return '';
+    const rounded = Math.round(parseFloat(amount));
+    return `$${rounded.toLocaleString('en-US')}`;
+  };
+
+  // WBS name resolvers
+  const getWbsCategoryName = (catId) => {
+    if (!catId) return '';
+    const cat = wbsCategories.find((c) => c.id === catId);
+    return cat ? cat.category_name : '';
+  };
+  const getWbsSubcategoryName = (subId) => {
+    if (!subId) return '';
+    const sub = wbsSubcategories.find((s) => s.id === subId);
+    return sub ? sub.subcategory_name : '';
+  };
+
+  // ---------------------------
+  // SEARCH
+  // ---------------------------
   const displayedTransactions = transactions.filter((tx) => {
     const query = searchQuery.toLowerCase();
     return (
@@ -248,17 +287,20 @@ function LedgerPage() {
   });
 
   return (
-    <div style={{ padding: '2rem' }}>
-      {/* Back Button: Takes user back to the Program Dashboard */}
+    <div style={{ maxWidth: '90%', margin: '0 auto', padding: '1rem' }}>
+      {/* Back Button */}
       <div style={{ marginBottom: '1rem' }}>
         <button onClick={() => navigate(`/dashboard/${programId}`)}>
           Back to Program Dashboard
         </button>
       </div>
 
-      <h1>Ledger Transactions for Program {programId}</h1>
+      <h1>
+        Ledger Transactions for{' '}
+        {program ? program.program_name : `Program ${programId}`}
+      </h1>
 
-      {/* Search Bar */}
+      {/* Search */}
       <div style={{ marginBottom: '1rem' }}>
         <input
           type="text"
@@ -269,357 +311,536 @@ function LedgerPage() {
         />
       </div>
 
-      {/* Form for adding new transaction */}
-      <h2>Add New Transaction</h2>
-      <form onSubmit={handleAddTransaction} style={{ marginBottom: '2rem' }}>
-        <div>
-          <input
-            type="text"
-            name="vendor_name"
-            placeholder="Vendor Name"
-            value={newTransaction.vendor_name}
-            onChange={handleInputChange}
-            required
-            style={{ marginRight: '0.5rem' }}
-          />
-          <input
-            type="text"
-            name="expense_description"
-            placeholder="Expense Description"
-            value={newTransaction.expense_description}
-            onChange={handleInputChange}
-            required
-            style={{ marginRight: '0.5rem' }}
-          />
+      {/* Collapsible Form */}
+      <div
+        style={{
+          border: '1px solid #ccc',
+          borderRadius: '6px',
+          marginBottom: '2rem'
+        }}
+      >
+        <div
+          onClick={() => setFormOpen(!formOpen)}
+          style={{
+            backgroundColor: '#f2f2f2',
+            padding: '0.75rem',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
+          {formOpen ? 'Hide' : 'Show'} Add Transaction
         </div>
-        <div style={{ marginTop: '0.5rem' }}>
-          <input
-            type="number"
-            name="baseline_amount"
-            placeholder="Baseline Amount"
-            value={newTransaction.baseline_amount}
-            onChange={handleInputChange}
-            style={{ marginRight: '0.5rem' }}
-          />
-          <input
-            type="number"
-            name="planned_amount"
-            placeholder="Planned Amount"
-            value={newTransaction.planned_amount}
-            onChange={handleInputChange}
-            style={{ marginRight: '0.5rem' }}
-          />
-          <input
-            type="number"
-            name="actual_amount"
-            placeholder="Actual Amount"
-            value={newTransaction.actual_amount}
-            onChange={handleInputChange}
-            style={{ marginRight: '0.5rem' }}
-          />
-        </div>
-        <div style={{ marginTop: '0.5rem' }}>
-          <input
-            type="date"
-            name="baseline_date"
-            value={newTransaction.baseline_date}
-            onChange={handleInputChange}
-            style={{ marginRight: '0.5rem' }}
-          />
-          <input
-            type="date"
-            name="planned_date"
-            value={newTransaction.planned_date}
-            onChange={handleInputChange}
-            style={{ marginRight: '0.5rem' }}
-          />
-          <input
-            type="date"
-            name="actual_date"
-            value={newTransaction.actual_date}
-            onChange={handleInputChange}
-            style={{ marginRight: '0.5rem' }}
-          />
-        </div>
-        <div style={{ marginTop: '0.5rem' }}>
-          {/* Optional Dropdown for WBS Category */}
-          <select
-            name="wbs_category_id"
-            value={newTransaction.wbs_category_id}
-            onChange={handleCategoryChange}
-            style={{ marginRight: '0.5rem' }}
-          >
-            <option value="">Select WBS Category</option>
-            {wbsCategories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.category_name}
-              </option>
-            ))}
-          </select>
-          {/* Optional Dropdown for WBS Subcategory */}
-          <select
-            name="wbs_subcategory_id"
-            value={newTransaction.wbs_subcategory_id}
-            onChange={handleInputChange}
-            style={{ marginRight: '0.5rem' }}
-          >
-            <option value="">Select WBS Subcategory</option>
-            {newTransaction.wbs_category_id &&
-              wbsSubcategories
-                .filter((sub) =>
-                  sub.category_id === parseInt(newTransaction.wbs_category_id)
-                )
-                .map((sub) => (
-                  <option key={sub.id} value={sub.id}>
-                    {sub.subcategory_name}
-                  </option>
-                ))}
-          </select>
-        </div>
-        <div style={{ marginTop: '0.5rem' }}>
-          <input
-            type="text"
-            name="invoice_link"
-            placeholder="Invoice Link"
-            value={newTransaction.invoice_link}
-            onChange={handleInputChange}
-            style={{ marginRight: '0.5rem' }}
-          />
-          <input
-            type="text"
-            name="invoice_number"
-            placeholder="Invoice Number"
-            value={newTransaction.invoice_number}
-            onChange={handleInputChange}
-            style={{ marginRight: '0.5rem' }}
-          />
-        </div>
-        <div style={{ marginTop: '0.5rem' }}>
-          <input
-            type="text"
-            name="notes"
-            placeholder="Notes"
-            value={newTransaction.notes}
-            onChange={handleInputChange}
-            style={{ marginRight: '0.5rem', width: '300px' }}
-          />
-        </div>
-        <button type="submit" style={{ marginTop: '1rem' }}>
-          Add Transaction
-        </button>
-      </form>
+        {formOpen && (
+          <div style={{ padding: '0.75rem' }}>
+            <form onSubmit={handleAddTransaction} style={{ display: 'grid', rowGap: '0.75rem' }}>
+              {/* Group 1 */}
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={labelStyle}>
+                    Vendor Name
+                    <input
+                      type="text"
+                      name="vendor_name"
+                      value={newTransaction.vendor_name}
+                      onChange={handleInputChange}
+                      required
+                      style={inputStyle}
+                    />
+                  </label>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={labelStyle}>
+                    Expense Description
+                    <input
+                      type="text"
+                      name="expense_description"
+                      value={newTransaction.expense_description}
+                      onChange={handleInputChange}
+                      required
+                      style={inputStyle}
+                    />
+                  </label>
+                </div>
+              </div>
 
-      {/* Transactions Table */}
-      <h2>Transactions List</h2>
-      <table border="1" cellPadding="8">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Vendor</th>
-            <th>Description</th>
-            <th>Baseline Amt</th>
-            <th>Planned Amt</th>
-            <th>Actual Amt</th>
-            <th>Baseline Date</th>
-            <th>Planned Date</th>
-            <th>Actual Date</th>
-            <th>WBS Cat ID</th>
-            <th>WBS Subcat ID</th>
-            <th>Invoice #</th>
-            <th>Notes</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {displayedTransactions.map((tx) => (
-            <tr key={tx.id}>
-              <td>{tx.id}</td>
-              <td>
-                {editingTransactionId === tx.id ? (
-                  <input
-                    type="text"
-                    name="vendor_name"
-                    value={editingTransactionData.vendor_name}
-                    onChange={handleEditChange}
-                  />
-                ) : (
-                  tx.vendor_name
-                )}
-              </td>
-              <td>
-                {editingTransactionId === tx.id ? (
-                  <input
-                    type="text"
-                    name="expense_description"
-                    value={editingTransactionData.expense_description}
-                    onChange={handleEditChange}
-                  />
-                ) : (
-                  tx.expense_description
-                )}
-              </td>
-              <td>
-                {editingTransactionId === tx.id ? (
-                  <input
-                    type="number"
-                    name="baseline_amount"
-                    value={editingTransactionData.baseline_amount}
-                    onChange={handleEditChange}
-                  />
-                ) : (
-                  tx.baseline_amount
-                )}
-              </td>
-              <td>
-                {editingTransactionId === tx.id ? (
-                  <input
-                    type="number"
-                    name="planned_amount"
-                    value={editingTransactionData.planned_amount}
-                    onChange={handleEditChange}
-                  />
-                ) : (
-                  tx.planned_amount
-                )}
-              </td>
-              <td>
-                {editingTransactionId === tx.id ? (
-                  <input
-                    type="number"
-                    name="actual_amount"
-                    value={editingTransactionData.actual_amount}
-                    onChange={handleEditChange}
-                  />
-                ) : (
-                  tx.actual_amount
-                )}
-              </td>
-              <td>
-                {editingTransactionId === tx.id ? (
-                  <input
-                    type="date"
-                    name="baseline_date"
-                    value={editingTransactionData.baseline_date}
-                    onChange={handleEditChange}
-                  />
-                ) : (
-                  tx.baseline_date
-                )}
-              </td>
-              <td>
-                {editingTransactionId === tx.id ? (
-                  <input
-                    type="date"
-                    name="planned_date"
-                    value={editingTransactionData.planned_date}
-                    onChange={handleEditChange}
-                  />
-                ) : (
-                  tx.planned_date
-                )}
-              </td>
-              <td>
-                {editingTransactionId === tx.id ? (
-                  <input
-                    type="date"
-                    name="actual_date"
-                    value={editingTransactionData.actual_date}
-                    onChange={handleEditChange}
-                  />
-                ) : (
-                  tx.actual_date
-                )}
-              </td>
-              <td>
-                {editingTransactionId === tx.id ? (
-                  <select
-                    name="wbs_category_id"
-                    value={editingTransactionData.wbs_category_id}
-                    onChange={handleEditCategoryChange}
-                  >
-                    <option value="">Select WBS Category</option>
-                    {wbsCategories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.category_name}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  tx.wbs_category_id
-                )}
-              </td>
-              <td>
-                {editingTransactionId === tx.id ? (
-                  <select
-                    name="wbs_subcategory_id"
-                    value={editingTransactionData.wbs_subcategory_id}
-                    onChange={handleEditChange}
-                  >
-                    <option value="">Select WBS Subcategory</option>
-                    {editingTransactionData.wbs_category_id &&
-                      wbsSubcategories
-                        .filter(
-                          (sub) =>
-                            sub.category_id ===
-                            parseInt(editingTransactionData.wbs_category_id)
-                        )
-                        .map((sub) => (
-                          <option key={sub.id} value={sub.id}>
-                            {sub.subcategory_name}
-                          </option>
-                        ))}
-                  </select>
-                ) : (
-                  tx.wbs_subcategory_id
-                )}
-              </td>
-              <td>
-                {editingTransactionId === tx.id ? (
-                  <input
-                    type="text"
-                    name="invoice_number"
-                    value={editingTransactionData.invoice_number}
-                    onChange={handleEditChange}
-                  />
-                ) : (
-                  tx.invoice_number
-                )}
-              </td>
-              <td>
-                {editingTransactionId === tx.id ? (
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={labelStyle}>
+                    WBS Category
+                    <select
+                      name="wbs_category_id"
+                      value={newTransaction.wbs_category_id}
+                      onChange={handleCategoryChange}
+                      style={inputStyle}
+                    >
+                      <option value="">Select WBS Category</option>
+                      {wbsCategories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.category_name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={labelStyle}>
+                    WBS Subcategory
+                    <select
+                      name="wbs_subcategory_id"
+                      value={newTransaction.wbs_subcategory_id}
+                      onChange={handleInputChange}
+                      style={inputStyle}
+                    >
+                      <option value="">Select WBS Subcategory</option>
+                      {filteredSubcategories.map((sub) => (
+                        <option key={sub.id} value={sub.id}>
+                          {sub.subcategory_name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label style={labelStyle}>
+                  Notes
                   <input
                     type="text"
                     name="notes"
-                    value={editingTransactionData.notes}
-                    onChange={handleEditChange}
+                    value={newTransaction.notes}
+                    onChange={handleInputChange}
+                    style={{ ...inputStyle, width: '100%' }}
                   />
-                ) : (
-                  tx.notes
-                )}
-              </td>
-              <td>
-                {editingTransactionId === tx.id ? (
-                  <>
-                    <button onClick={() => handleUpdateTransaction(tx.id)}>
-                      Save
-                    </button>
-                    <button onClick={handleCancelEdit}>Cancel</button>
-                  </>
-                ) : (
-                  <>
-                    <button onClick={() => handleEditClick(tx)}>Edit</button>
-                    <button onClick={() => handleDeleteTransaction(tx.id)}>
-                      Delete
-                    </button>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
+                </label>
+              </div>
+
+              {/* Group 2 - subgroups */}
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {/* Baseline */}
+                <div
+                  style={{
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    padding: '0.5rem',
+                    flex: '1 1 160px'
+                  }}
+                >
+                  <label style={labelStyle}>
+                    Baseline Date
+                    <input
+                      type="date"
+                      name="baseline_date"
+                      value={newTransaction.baseline_date}
+                      onChange={handleInputChange}
+                      style={inputStyle}
+                    />
+                  </label>
+                  <label style={labelStyle}>
+                    Baseline Amount
+                    <input
+                      type="number"
+                      name="baseline_amount"
+                      value={newTransaction.baseline_amount}
+                      onChange={handleInputChange}
+                      style={inputStyle}
+                    />
+                  </label>
+                </div>
+
+                {/* Planned */}
+                <div
+                  style={{
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    padding: '0.5rem',
+                    flex: '1 1 160px'
+                  }}
+                >
+                  <label style={labelStyle}>
+                    Planned Date
+                    <input
+                      type="date"
+                      name="planned_date"
+                      value={newTransaction.planned_date}
+                      onChange={handleInputChange}
+                      style={inputStyle}
+                    />
+                  </label>
+                  <label style={labelStyle}>
+                    Planned Amount
+                    <input
+                      type="number"
+                      name="planned_amount"
+                      value={newTransaction.planned_amount}
+                      onChange={handleInputChange}
+                      style={inputStyle}
+                    />
+                  </label>
+                </div>
+
+                {/* Actual */}
+                <div
+                  style={{
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    padding: '0.5rem',
+                    flex: '1 1 160px'
+                  }}
+                >
+                  <label style={labelStyle}>
+                    Actual Date
+                    <input
+                      type="date"
+                      name="actual_date"
+                      value={newTransaction.actual_date}
+                      onChange={handleInputChange}
+                      style={inputStyle}
+                    />
+                  </label>
+                  <label style={labelStyle}>
+                    Actual Amount
+                    <input
+                      type="number"
+                      name="actual_amount"
+                      value={newTransaction.actual_amount}
+                      onChange={handleInputChange}
+                      style={inputStyle}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Group 3 */}
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={labelStyle}>
+                    Invoice Number
+                    <input
+                      type="text"
+                      name="invoice_number"
+                      value={newTransaction.invoice_number}
+                      onChange={handleInputChange}
+                      style={inputStyle}
+                    />
+                  </label>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={labelStyle}>
+                    Invoice Link
+                    <input
+                      type="text"
+                      name="invoice_link"
+                      value={newTransaction.invoice_link}
+                      onChange={handleInputChange}
+                      style={inputStyle}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <button type="submit" style={{ marginTop: '0.5rem' }}>
+                  Add Transaction
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+      </div>
+
+      {/* Transactions Table */}
+      <h2>Transactions List</h2>
+      <table
+        style={{
+          border: '1px solid #ccc',
+          borderCollapse: 'collapse',
+          width: '100%',
+          fontSize: '0.9rem'
+        }}
+      >
+        <thead>
+          <tr>
+            {/* Order: Vendor, Desc, WBS Cat, WBS Subcat, Invoice #, 
+                Baseline Date, Baseline Amt, 
+                Planned Date, Planned Amt, 
+                Actual Date, Actual Amt, 
+                Notes, Actions */}
+            <th style={thStyle}>Vendor</th>
+            <th style={thStyle}>Description</th>
+            <th style={thStyle}>WBS Category</th>
+            <th style={thStyle}>WBS Subcategory</th>
+            <th style={thStyle}>Invoice #</th>
+            <th style={thStyle}>Baseline Date</th>
+            <th style={thStyle}>Baseline Amt</th>
+            <th style={thStyle}>Planned Date</th>
+            <th style={thStyle}>Planned Amt</th>
+            <th style={thStyle}>Actual Date</th>
+            <th style={thStyle}>Actual Amt</th>
+            <th style={thStyle}>Notes</th>
+            <th style={thStyle}>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {displayedTransactions.map((tx) => {
+            const rowBg = getRowBackground(tx);
+            const catName = getWbsCategoryName(tx.wbs_category_id);
+            const subcatName = getWbsSubcategoryName(tx.wbs_subcategory_id);
+
+            return (
+              <tr key={tx.id} style={{ backgroundColor: rowBg }}>
+                {/* Vendor */}
+                <td style={tdStyle}>
+                  {editingTransactionId === tx.id ? (
+                    <input
+                      type="text"
+                      name="vendor_name"
+                      value={editingTransactionData.vendor_name || ''}
+                      onChange={handleEditChange}
+                    />
+                  ) : (
+                    tx.vendor_name
+                  )}
+                </td>
+
+                {/* Description */}
+                <td style={tdStyle}>
+                  {editingTransactionId === tx.id ? (
+                    <input
+                      type="text"
+                      name="expense_description"
+                      value={editingTransactionData.expense_description || ''}
+                      onChange={handleEditChange}
+                    />
+                  ) : (
+                    tx.expense_description
+                  )}
+                </td>
+
+                {/* WBS Category */}
+                <td style={tdStyle}>
+                  {editingTransactionId === tx.id ? (
+                    <select
+                      name="wbs_category_id"
+                      value={editingTransactionData.wbs_category_id || ''}
+                      onChange={handleEditCategoryChange}
+                    >
+                      <option value="">Select WBS Category</option>
+                      {wbsCategories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.category_name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    catName
+                  )}
+                </td>
+
+                {/* WBS Subcategory */}
+                <td style={tdStyle}>
+                  {editingTransactionId === tx.id ? (
+                    <select
+                      name="wbs_subcategory_id"
+                      value={editingTransactionData.wbs_subcategory_id || ''}
+                      onChange={handleEditChange}
+                    >
+                      <option value="">Select WBS Subcategory</option>
+                      {editingTransactionData.wbs_category_id &&
+                        wbsSubcategories
+                          .filter(
+                            (sub) =>
+                              sub.category_id ===
+                              parseInt(editingTransactionData.wbs_category_id)
+                          )
+                          .map((sub) => (
+                            <option key={sub.id} value={sub.id}>
+                              {sub.subcategory_name}
+                            </option>
+                          ))}
+                    </select>
+                  ) : (
+                    subcatName
+                  )}
+                </td>
+
+                {/* Invoice # link */}
+                <td style={tdStyle}>
+                  {editingTransactionId === tx.id ? (
+                    <>
+                      <input
+                        type="text"
+                        name="invoice_number"
+                        value={editingTransactionData.invoice_number || ''}
+                        onChange={handleEditChange}
+                      />
+                      <input
+                        type="text"
+                        name="invoice_link"
+                        value={editingTransactionData.invoice_link || ''}
+                        onChange={handleEditChange}
+                        placeholder="Invoice Link"
+                        style={{ marginTop: '0.25rem' }}
+                      />
+                    </>
+                  ) : tx.invoice_number ? (
+                    <a
+                      href={tx.invoice_link || '#'}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {tx.invoice_number}
+                    </a>
+                  ) : (
+                    ''
+                  )}
+                </td>
+
+                {/* Baseline Date */}
+                <td style={tdStyle}>
+                  {editingTransactionId === tx.id ? (
+                    <input
+                      type="date"
+                      name="baseline_date"
+                      value={editingTransactionData.baseline_date || ''}
+                      onChange={handleEditChange}
+                    />
+                  ) : (
+                    tx.baseline_date || ''
+                  )}
+                </td>
+
+                {/* Baseline Amount (USD) */}
+                <td style={tdStyle}>
+                  {editingTransactionId === tx.id ? (
+                    <input
+                      type="number"
+                      name="baseline_amount"
+                      value={editingTransactionData.baseline_amount || ''}
+                      onChange={handleEditChange}
+                    />
+                  ) : (
+                    formatUsd0(tx.baseline_amount)
+                  )}
+                </td>
+
+                {/* Planned Date */}
+                <td style={tdStyle}>
+                  {editingTransactionId === tx.id ? (
+                    <input
+                      type="date"
+                      name="planned_date"
+                      value={editingTransactionData.planned_date || ''}
+                      onChange={handleEditChange}
+                    />
+                  ) : (
+                    tx.planned_date || ''
+                  )}
+                </td>
+
+                {/* Planned Amount */}
+                <td style={tdStyle}>
+                  {editingTransactionId === tx.id ? (
+                    <input
+                      type="number"
+                      name="planned_amount"
+                      value={editingTransactionData.planned_amount || ''}
+                      onChange={handleEditChange}
+                    />
+                  ) : (
+                    formatUsd0(tx.planned_amount)
+                  )}
+                </td>
+
+                {/* Actual Date */}
+                <td style={tdStyle}>
+                  {editingTransactionId === tx.id ? (
+                    <input
+                      type="date"
+                      name="actual_date"
+                      value={editingTransactionData.actual_date || ''}
+                      onChange={handleEditChange}
+                    />
+                  ) : (
+                    tx.actual_date || ''
+                  )}
+                </td>
+
+                {/* Actual Amount */}
+                <td style={tdStyle}>
+                  {editingTransactionId === tx.id ? (
+                    <input
+                      type="number"
+                      name="actual_amount"
+                      value={editingTransactionData.actual_amount || ''}
+                      onChange={handleEditChange}
+                    />
+                  ) : (
+                    formatUsd0(tx.actual_amount)
+                  )}
+                </td>
+
+                {/* Notes */}
+                <td style={tdStyle}>
+                  {editingTransactionId === tx.id ? (
+                    <input
+                      type="text"
+                      name="notes"
+                      value={editingTransactionData.notes || ''}
+                      onChange={handleEditChange}
+                    />
+                  ) : (
+                    tx.notes
+                  )}
+                </td>
+
+                {/* Actions */}
+                <td style={tdStyle}>
+                  {editingTransactionId === tx.id ? (
+                    <>
+                      <button onClick={() => handleUpdateTransaction(tx.id)}>
+                        Save
+                      </button>
+                      <button onClick={handleCancelEdit}>Cancel</button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={() => handleEditClick(tx)}>Edit</button>
+                      <button onClick={() => handleDeleteTransaction(tx.id)}>
+                        Delete
+                      </button>
+                    </>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
   );
 }
+
+// Basic styles
+const thStyle = {
+  border: '1px solid #ccc',
+  padding: '0.5rem',
+  textAlign: 'left'
+};
+const tdStyle = {
+  border: '1px solid #ccc',
+  padding: '0.5rem',
+  textAlign: 'left'
+};
+const labelStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  fontWeight: '500',
+  marginBottom: '0.25rem'
+};
+const inputStyle = {
+  marginTop: '0.25rem',
+  padding: '0.25rem'
+};
 
 export default LedgerPage;
