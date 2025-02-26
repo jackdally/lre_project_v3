@@ -1,30 +1,39 @@
-// src/components/Sidebar.js
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { FaBars, FaTimes, FaHome, FaListAlt, FaHistory } from "react-icons/fa"; // Icons for links
-import "./Sidebar.css"; // Import CSS for styling
+import { FaBars, FaTimes, FaHome, FaListAlt, FaHistory } from "react-icons/fa";
+import "./Sidebar.css";
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className={`sidebar ${isOpen ? "open" : "closed"}`}>
-      {/* Toggle Button */}
       <button className="toggle-btn" onClick={() => setIsOpen(!isOpen)}>
         {isOpen ? <FaTimes /> : <FaBars />}
       </button>
 
-      {/* Navigation Links */}
       <nav>
-        <NavLink to="/" activeClassName="active">
+        {/* Use a function for className */}
+        <NavLink 
+          to="/" 
+          className={({ isActive }) => (isActive ? "active" : undefined)}
+        >
           <FaHome />
-          <span>Home</span> {/* ✅ Text hides when collapsed */}
+          <span>Home</span>
         </NavLink>
-        <NavLink to="/programs-manage" activeClassName="active">
+
+        <NavLink 
+          to="/programs-manage"
+          className={({ isActive }) => (isActive ? "active" : undefined)}
+        >
           <FaListAlt />
           <span>Manage Programs</span>
         </NavLink>
-        <NavLink to="/edit-history" activeClassName="active">
+
+        <NavLink
+          to="/edit-history"
+          className={({ isActive }) => (isActive ? "active" : undefined)}
+        >
           <FaHistory />
           <span>Edit History</span>
         </NavLink>

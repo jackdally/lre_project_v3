@@ -51,6 +51,14 @@ def read_programs(skip: int = 0, limit: int = None, db: Session = Depends(get_db
     programs = db.query(ProgramModel).offset(skip).limit(limit).all()
     return programs
 
+@app.get("/programs/{program_id}", response_model=schemas.Program)
+def read_program(program_id: int, db: Session = Depends(get_db)):
+    db_program = db.query(ProgramModel).filter(ProgramModel.id == program_id).first()
+    if not db_program:
+        raise HTTPException(status_code=404, detail="Program not found")
+    return db_program
+
+
 @app.put("/programs/{program_id}", response_model=schemas.Program)
 def update_program(program_id: int, program_update: schemas.ProgramUpdate, db: Session = Depends(get_db)):
     db_program = db.query(ProgramModel).filter(ProgramModel.id == program_id).first()
