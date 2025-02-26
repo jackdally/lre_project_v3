@@ -1,0 +1,47 @@
+/* Sidebar Styles */
+.sidebar {
+    width: 250px; /* Full width when open */
+    height: 100vh;
+    background: #222;
+    color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    transition: width 0.3s ease;
+    overflow: hidden;  /* Prevent text overflow */
+}
+
+/* Collapsed Sidebar */
+.sidebar.closed {
+    width: 60px; /* Shrink width */
+}
+
+/* Hide Text When Collapsed */
+.sidebar.closed nav a span {
+    display: none; /* Hide only text */
+}
+
+/* Ensure Icons Stay Visible */
+.sidebar nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between icon and text */
+    padding: 10px;
+    color: white;
+    text-decoration: none;
+    transition: background 0.2s;
+    white-space: nowrap; /* Prevent text wrapping */
+    overflow: hidden; /* Prevent squishing */
+}
+
+/* Active & Hover Effects */
+.sidebar nav a.active {
+    background: #444;
+}
+
+.sidebar nav a:hover {
+    background: #555;
+}

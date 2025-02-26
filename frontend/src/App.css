@@ -1,0 +1,238 @@
+/* Import Google Font */
+@import url('https://fonts.googleapis.com/css2?family=Tomorrow:wght@300;400;600;700&display=swap');
+
+/* Apply Font to Entire App */
+body {
+    font-family: 'Tomorrow', sans-serif;
+}
+
+
+/* Global Styles - App.css */
+:root {
+  --primary-color: #0A2540;  /* Dark Blue */
+  --secondary-color: #1C3F60; /* Lighter Blue */
+  --accent-color: #2DAED9;  /* Cyan */
+  --background-color: #F8FAFD;  /* Light Gray */
+  --text-color: #FFFFFF; /* White */
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --sidebar-width: 250px;
+  --sidebar-collapsed-width: 60px;
+}
+
+/* Reset Default Browser Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Tomorrow', sans-serif;
+}
+
+/* App Container */
+.App {
+  text-align: center;
+  background-color: var(--background-color);
+}
+
+/* Header Styling */
+.App-header {
+  background-color: var(--primary-color);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: var(--text-color);
+}
+
+/* Links */
+.App-link {
+  color: var(--accent-color);
+}
+
+/* Logo Animation */
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+  animation: App-logo-spin infinite 20s linear;
+}
+
+@keyframes App-logo-spin {
+  from {
+      transform: rotate(0deg);
+  }
+  to {
+      transform: rotate(360deg);
+  }
+}
+
+/* Navigation Bar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--primary-color);
+  padding: 1rem 2rem;
+  color: var(--text-color);
+  box-shadow: 0px 4px 10px var(--shadow-color);
+}
+
+.navbar .logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.navbar nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.navbar nav a {
+  color: var(--text-color);
+  text-decoration: none;
+  font-size: 1rem;
+  transition: color 0.3s ease-in-out;
+}
+
+.navbar nav a:hover,
+.navbar nav a.active {
+  color: var(--accent-color);
+}
+
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-width);
+  height: 100vh;
+  background: var(--secondary-color);
+  color: white;
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  overflow: hidden;
+}
+
+.sidebar.closed {
+  width: var(--sidebar-collapsed-width);
+}
+
+.sidebar .toggle-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+.sidebar nav a {
+  text-decoration: none;
+  color: white;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background 0.2s;
+}
+
+.sidebar nav a.active {
+  background: var(--accent-color);
+}
+
+.sidebar nav a:hover {
+  background: #555;
+}
+
+.nav-text.hidden {
+  display: none;
+}
+
+/* Content Area */
+.content {
+  margin-left: var(--sidebar-width);
+  padding: 2rem;
+  transition: margin-left 0.3s ease;
+}
+
+.sidebar.closed + .content {
+  margin-left: var(--sidebar-collapsed-width);
+}
+
+/* Scrollable Tables */
+.table-container {
+  overflow-x: auto;
+  max-height: 500px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px var(--shadow-color);
+  background: white;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--shadow-color);
+}
+
+th {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* Buttons */
+button {
+  background: var(--accent-color);
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 1rem;
+  border-radius: 5px;
+}
+
+button:hover {
+  background: var(--primary-color);
+}
+
+/* Collapsible Graphs */
+.graph-container {
+  margin-top: 2rem;
+  padding: 1rem;
+  border: 1px solid var(--shadow-color);
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px var(--shadow-color);
+}
+
+.graph-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  font-weight: bold;
+  padding: 10px;
+}
+
+.graph-content {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Responsive Layout */
+@media screen and (max-width: 768px) {
+  .sidebar {
+      width: var(--sidebar-collapsed-width);
+  }
+  
+  .content {
+      margin-left: var(--sidebar-collapsed-width);
+  }
+}
