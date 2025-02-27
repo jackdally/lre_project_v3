@@ -2,15 +2,15 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from database import SessionLocal, engine
+from database.database import SessionLocal, engine
 import models
 from models.program import Program as ProgramModel
 from models.ledger_transaction import LedgerTransaction as LedgerTransactionModel
 from models.wbs_category import WbsCategory as WbsCategoryModel
 from models.wbs_subcategory import WbsSubcategory as WbsSubcategoryModel
 from models.edit_history import EditHistory as EditHistoryModel
-import schemas
-import history_listener  # Ensure the event listener is registered
+from schemas import schemas
+import database.history_listener  # Ensure the event listener is registered
 from fastapi.middleware.cors import CORSMiddleware
 
 # Create database tables if they don't exist
@@ -207,7 +207,7 @@ from fastapi import Query
 from datetime import datetime
 from collections import defaultdict
 from models.ledger_transaction import LedgerTransaction as LedgerTransactionModel
-import schemas
+from schemas import schemas
 
 @app.get("/dashboard/summary/", response_model=schemas.DashboardSummary)
 def get_dashboard_summary(

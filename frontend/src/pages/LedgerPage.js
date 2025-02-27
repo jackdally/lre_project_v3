@@ -43,7 +43,31 @@ function LedgerPage() {
   const [wbsCategories, setWbsCategories] = useState([]);
   const [wbsSubcategories, setWbsSubcategories] = useState([]);
 
-  // Search text for filtering displayed transactions (optional)
+  // Collapsible form
+  const [formOpen, setFormOpen] = useState(true);
+
+  // New transaction form (grouped fields)
+  const [newTransaction, setNewTransaction] = useState({
+    vendor_name: '',
+    expense_description: '',
+    wbs_category_id: '',
+    wbs_subcategory_id: '',
+    notes: '',
+    baseline_date: '',
+    baseline_amount: '',
+    planned_date: '',
+    planned_amount: '',
+    actual_date: '',
+    actual_amount: '',
+    invoice_number: '',
+    invoice_link: ''
+  });
+
+  // Row-based editing
+  const [editingTransactionId, setEditingTransactionId] = useState(null);
+  const [editingTransactionData, setEditingTransactionData] = useState({});
+
+  // Search
   const [searchQuery, setSearchQuery] = useState('');
 
   // ------------------------------------------------------

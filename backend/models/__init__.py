@@ -1,5 +1,5 @@
 # models/__init__.py
-from database import Base
+from database.database import Base
 from .ledger_transaction import LedgerTransaction
 from .program import Program
 from .wbs_category import WbsCategory

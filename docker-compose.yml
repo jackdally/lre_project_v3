@@ -27,13 +27,11 @@
 
 # docker-compose.yml
 
-version: "3.8"
-
 services:
   frontend:
     build:
-      context: .
-      dockerfile: frontend/Dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
       - "5000:5000"
     depends_on:
@@ -41,11 +39,11 @@ services:
 
   backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
     environment:
       - DATABASE_URL=sqlite:///./lre_project_v3.db
     volumes:
-      - ./lre_project_v3.db:/app/lre_project_v3.db
+      - ./backend/lre_project_v3.db:/app/lre_project_v3.db
