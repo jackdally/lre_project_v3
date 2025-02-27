@@ -23,19 +23,19 @@
 # Dockerfile for Frontend (React)
 
 # Step 1: Use Node.js as a base image
-FROM node:16
+FROM node:18-alpine
 
 # Step 2: Set the working directory in the container
 WORKDIR /app
 
 # Step 3: Copy the frontend package files
-COPY frontend/package.json frontend/package-lock.json ./
+COPY package.json package-lock.json ./
 
 # Step 4: Install the dependencies
 RUN npm install
 
 # Step 5: Copy the rest of the frontend files
-COPY frontend/ .
+COPY . .  
 
 # Step 6: Build the React app
 RUN npm run build
