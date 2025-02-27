@@ -2,19 +2,19 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from backend.database.database import SessionLocal, engine
-import backend.models
-from backend.models.program import Program as ProgramModel
-from backend.models.ledger_transaction import LedgerTransaction as LedgerTransactionModel
-from backend.models.wbs_category import WbsCategory as WbsCategoryModel
-from backend.models.wbs_subcategory import WbsSubcategory as WbsSubcategoryModel
-from backend.models.edit_history import EditHistory as EditHistoryModel
-import schemas
-import backend.database.history_listener  # Ensure the event listener is registered
+from database.database import SessionLocal, engine
+import models
+from models.program import Program as ProgramModel
+from models.ledger_transaction import LedgerTransaction as LedgerTransactionModel
+from models.wbs_category import WbsCategory as WbsCategoryModel
+from models.wbs_subcategory import WbsSubcategory as WbsSubcategoryModel
+from models.edit_history import EditHistory as EditHistoryModel
+import schemas.schemas
+import database.history_listener  # Ensure the event listener is registered
 from fastapi.middleware.cors import CORSMiddleware
 
 # Create database tables if they don't exist
-backend.models.Base.metadata.create_all(bind=engine)
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="LRE Project API")
 
@@ -188,7 +188,7 @@ def delete_wbs_subcategory(subcategory_id: int, db: Session = Depends(get_db)):
 # ---------------------------
 @app.get("/edit_history/", response_model=List[schemas.EditHistory])
 def read_edit_history(skip: int = 0, limit: int = None, db: Session = Depends(get_db)):
-    histories = db.query(backend.models.edit_history.EditHistory).order_by(backend.models.edit_history.EditHistory.edited_at.desc()).offset(skip).limit(limit).all()
+    histories = db.query(models.edit_history.EditHistory).order_by(models.edit_history.EditHistory.edited_at.desc()).offset(skip).limit(limit).all()
     return histories
 
 # ---------------------------
@@ -198,7 +198,7 @@ def read_edit_history(skip: int = 0, limit: int = None, db: Session = Depends(ge
 from fastapi import Query
 from datetime import datetime
 from collections import defaultdict
-from backend.models.ledger_transaction import LedgerTransaction as LedgerTransactionModel
+from models.ledger_transaction import LedgerTransaction as LedgerTransactionModel
 import schemas
 
 @app.get("/dashboard/summary/", response_model=schemas.DashboardSummary)
