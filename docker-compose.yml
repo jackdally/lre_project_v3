@@ -1,25 +1,51 @@
+# version: "3.8"
+
+# services:
+#   backend:
+#     build: .
+#     ports:
+#       - "8000:8000"
+#     volumes:
+#       - .:/app
+#     environment:
+#       - PYTHONDONTWRITEBYTECODE=1
+#       - PYTHONUNBUFFERED=1
+#     depends_on:
+#       - frontend  # Ensures frontend starts first
+
+#   frontend:
+#     build:
+#       context: ./frontend
+#       dockerfile: Dockerfile
+#     ports:
+#       - "3000:3000"
+#     volumes:
+#       - .:/app
+#     environment:
+#       - NODE_ENV=development
+
+
+# docker-compose.yml
+
 version: "3.8"
 
 services:
-  backend:
-    build: .
-    ports:
-      - "8000:8000"
-    volumes:
-      - .:/app
-    environment:
-      - PYTHONDONTWRITEBYTECODE=1
-      - PYTHONUNBUFFERED=1
-    depends_on:
-      - frontend  # Ensures frontend starts first
-
   frontend:
     build:
-      context: ./frontend
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: .
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
-    volumes:
-      - .:/app
+      - "8000:8000"
     environment:
-      - NODE_ENV=development
+      - DATABASE_URL=sqlite:///./lre_project_v3.db
+    volumes:
+      - ./lre_project_v3.db:/app/lre_project_v3.db

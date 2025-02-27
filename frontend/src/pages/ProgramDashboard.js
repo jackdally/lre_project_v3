@@ -14,7 +14,9 @@ import {
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  BarController, // Import BarController
+  LineController, // Import LineController
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 
@@ -24,6 +26,8 @@ ChartJS.register(
   PointElement,
   LineElement,
   BarElement,
+  BarController, // Register BarController
+  LineController, // Register LineController
   Title,
   Tooltip,
   Legend,
