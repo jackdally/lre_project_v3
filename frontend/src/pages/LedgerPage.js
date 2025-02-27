@@ -18,7 +18,7 @@ function LedgerPage() {
   const [wbsSubcategories, setWbsSubcategories] = useState([]);
 
   // Collapsible form
-  const [formOpen, setFormOpen] = useState(true);
+  const [formOpen, setFormOpen] = useState(false);
 
   // New transaction form (grouped fields)
   const [newTransaction, setNewTransaction] = useState({
