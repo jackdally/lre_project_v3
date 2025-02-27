@@ -1,7 +1,7 @@
 # models/edit_history.py
 from sqlalchemy import Column, Integer, String, Text, TIMESTAMP
 from datetime import datetime, timezone
-from backend.database import Base
+from database.database import Base
 
 class EditHistory(Base):
     __tablename__ = 'edit_history'

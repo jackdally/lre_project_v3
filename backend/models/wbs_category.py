@@ -1,7 +1,7 @@
 # models/wbs_category.py
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
-from backend.database.database import Base
+from database.database import Base
 
 class WbsCategory(Base):
     __tablename__ = 'wbs_categories'

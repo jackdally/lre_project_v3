@@ -2,7 +2,7 @@
 from sqlalchemy import Column, Integer, String, Text, TIMESTAMP
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
-from backend.database.database import Base
+from database.database import Base
 
 class Program(Base):
     __tablename__ = 'programs'

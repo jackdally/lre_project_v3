@@ -3,7 +3,7 @@ from sqlalchemy import event
 from sqlalchemy.orm import Session
 from sqlalchemy import inspect
 from datetime import datetime, timezone
-from backend.models.edit_history import EditHistory
+from models.edit_history import EditHistory
 import logging
 
 # Set up logging

@@ -2,7 +2,7 @@
 from sqlalchemy import Column, Integer, String, Text, Date, DECIMAL, TIMESTAMP, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
-from backend.database.database import Base
+from database.database import Base
 
 class LedgerTransaction(Base):
     __tablename__ = 'ledger_transactions'
